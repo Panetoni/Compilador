@@ -1,0 +1,778 @@
+\documentclass{article}
+
+\setlength{\parindent}{0pt}
+\usepackage{amsmath, amsthm, amssymb, amsfonts}
+\usepackage{thmtools}
+\usepackage{graphicx}
+\usepackage{setspace}
+\usepackage{geometry}
+\usepackage{float}
+\usepackage{hyperref}
+\usepackage[utf8]{inputenc}
+\usepackage[english]{babel}
+\usepackage{framed}
+\usepackage[dvipsnames]{xcolor}
+\usepackage{tcolorbox}
+
+
+\colorlet{LightGray}{White!90!Periwinkle}
+\colorlet{LightOrange}{Orange!15}
+\colorlet{LightGreen}{Green!15}
+
+\newcommand{\HRule}[1]{\rule{\linewidth}{#1}}
+
+\declaretheoremstyle[name=Theorem,]{thmsty}
+\declaretheorem[style=thmsty,numberwithin=section]{theorem}
+\tcolorboxenvironment{theorem}{colback=LightGray}
+
+\declaretheoremstyle[name=Proposition,]{prosty}
+\declaretheorem[style=prosty,numberlike=theorem]{proposition}
+\tcolorboxenvironment{proposition}{colback=LightOrange}
+
+\declaretheoremstyle[name=Principle,]{prcpsty}
+\declaretheorem[style=prcpsty,numberlike=theorem]{principle}
+\tcolorboxenvironment{principle}{colback=LightGreen}
+
+\setstretch{1.2}
+\geometry{
+    textheight=9in,
+    textwidth=5.5in,
+    top=1in,
+    headheight=12pt,
+    headsep=25pt,
+    footskip=30pt
+}
+
+% ------------------------------------------------------------------------------
+
+\begin{document}
+
+% ------------------------------------------------------------------------------
+% Cover Page and ToC
+% ------------------------------------------------------------------------------
+
+\title{ \normalsize \textsc{}
+		\\ [2.0cm]
+		\HRule{1.5pt} \\
+		\LARGE \textbf{\uppercase{Relatório do trabalho 02 \\ Análise sintática LALR e baseada em PEG e Interpretação}
+		\HRule{2.0pt} \\ [0.6cm] \LARGE{BCC328 - Construção de compiladores I} \vspace*{10\baselineskip}}
+		}
+\date{}
+\author{\textbf{Autores:} \\
+		20.2.4182 - Leandro Marcos Mendes Zanetti\\
+		20.1.4016 - Pedro Parentoni de Almeida\\
+		Semestre 24.2}
+
+\maketitle
+\newpage
+
+% ------------------------------------------------------------------------------
+
+\section{Introdução}
+
+Este relatório aborda detalhadamente o projeto em Haskell que se propõe a implementar um compilador para a linguagem chamada "lang". O projeto tem quatro componentes principais: A análise Léxica, a representação recursiva da árvore de Sintaxe e as análises sintáticas de LALR e PEG.
+
+\section{Contexto Geral do Projeto}
+
+O projeto visa simular o funcionamento de um compilador, abordando etapas fundamentais do processo de compilação. Como por exemplo:
+
+\begin{enumerate}
+    \item Analisar a entrada fornecida por arquivos de código-fonte. 
+    \item Reconhecer tokens utilizando um analisador léxico (lexer). 
+    \item Construir uma árvore sintática que represente a estrutura hierárquica do código com diferentes análises sintáticas.
+    \item Exibir o resultado de forma legível no terminal. 
+\end{enumerate}
+
+Essas funcionalidades cobrem aspectos fundamentais da compilação, desde a identificação de palavras-chave e símbolos até a construção de uma representação estruturada que pode ser utilizada em fases posteriores, como a geração de código intermediário ou final.
+
+O projeto contou com a utilização de algumas ferramentas, como o 'Alex' e o 'Happy':
+\begin{itemize}
+    \item Alex: Gera automaticamente um analisador léxico a partir de regras definidas em um arquivo .x.
+    \item Happy: Gera automaticamente um analisador sintático LALR a partir de regras gramaticais definidas em um arquivo .y.
+\end{itemize}
+\section{Estrutura do projeto}
+
+O projeto está organizado em três principais diretórios: app, src e test.
+\begin{enumerate}
+    \item Pasta app: Contém o arquivo principal Main.hs, responsável por iniciar o programa e integrar os módulos. 
+    \item Pasta src: Contém os módulos principais do sistema:
+        \begin{itemize}
+            \item Lexer.x: Arquivo com as definições e regras de todos os tokens da linguagem.
+            \item Lexer.hs: Implementação do analisador léxico que converte o código de entrada em uma lista de tokens. Ele identifica palavras-chave, identificadores, operadores e símbolos de pontuação da linguagem Lang. Esse arquivo foi gerado utilizando a ferramenta 'Alex' a partir do conteúdo de Lexer.x.
+            \item Parser.y: Arquivo com a definição e regras da gramática de Lang, além da especificação das regras de formação da Árvore de Sintaxe Abstrata (AST). Esse arquivo foi grado utilizando utilizando a ferramenta 'Happy'.
+            \item Parser.hs: Responsável pela análise sintática LALR e geração da árvore sintática.
+            \item RecursiveParser.hs: Implementa um analisador sintático descendente recursivo para a linguagem Lang. Alternativa ao LALR, feito manualmente, sem ferramentas automáticas.
+            \item Interpreter.hs: Executa a AST gerada pelo parser, interpretando o código da linguagem Lang.
+            \item Syntax.hs: Define algumas regras da gramática, como as expressões e a estrutura de um programa em Lang.
+            \item PEG.hs: Responsável pela análise sintática, tem como objetivo executar o código representado pela árvore de sintaxe produzida pelo parser usando o interpretador.
+            \item Simplecombinators.hs: Biblioteca de combinadores disponibilizada pelo professor.
+        \end{itemize}
+
+    \item Pasta test: Inclui arquivos de entrada como exemplo.lang, que servem como base para testar as funcionalidades do compilador. 
+\end{enumerate}
+
+\section{Como Compilar e Executar}
+\subsection{Compilar}
+\begin{verbatim}
+    stack build
+\end{verbatim}
+
+\subsection{Executar}
+\begin{verbatim}
+    stack exec -- lang-compiler-exe --<opção> test/<arquivo.lang>
+\end{verbatim}
+
+\subsection{Exemplo de Execução}
+\begin{verbatim}
+    stack exec -- lang-compiler-exe --lexer test/exemplo.lang
+\end{verbatim}
+
+\subsection{Dentro do Programa}
+É possível escolher diversos arquivos de teste, todos se encontram dentro da pasta test. As opções disponíveis:
+\begin{itemize}
+    \item \texttt{exemplo.lang}
+    \item \texttt{small.lang}
+    \item \texttt{arvore.lang}
+    \item \texttt{fatorial.lang}
+    \item \texttt{fibonacci.lang}
+    \item \texttt{ordenar.lang}
+    \item \texttt{pilha.lang}
+\end{itemize}
+
+\section{Arquivo Principal}
+
+O módulo \texttt{Main.hs} é responsável por gerenciar as funcionalidades do compilador. Ao ser executado, o compilador lê os comandos que foram passados como parâmetro para sua execução e seleciona as chamadas de funções respectivas desse comando. A principal função do módulo é servir de controlador entre a entrada do usuário, via prompt de comando, e a execução das funcionalidades do compilador, como a análise léxica e a análise sintática.
+
+A implementação atual é funcional e oferece uma boa base para futuras extensões do compilador. Por exemplo, seria possível adicionar mais modos de operação, como um modo de geração de código intermediário ou final. Funcionalidades essas, que, serão colocadas em prática na próxima etapa do trabalho.
+
+\subsection{Fluxo de Execução}
+
+O fluxo de execução do módulo \texttt{Main.hs} é baseado em chamadas de funções de acordo com o que for escrito no prompt de comando pelo usuário. Com base no que é passado, o programa tem um comportamento distinto:
+
+\begin{itemize}
+    \item No modo \texttt{lexer}, o programa lê o arquivo de entrada e verifica seu conteúdo, após isso, passa para a função responsável pela análise léxica, que irá gerar e exibir os tokens encontrados, ou seja, irá gerar uma lista de tokens. O lexer divide o código-fonte em unidades significativas, como palavras-chave, operadores e identificadores.
+    \item No modo \texttt{recursive-tree}, o programa lê o arquivo de entrada e verifica seu conteúdo, após isso, passa esse conteúdo para o analisador sintático descendente recursivo, que processa os tokens e gera a árvore sintática correspondente. A árvore gerada representa a estrutura hierárquica do programa e é fundamental para as fases posteriores do compilador, como a geração de código intermediário.
+    \item No modo \texttt{lalr}, o programa lê o arquivo de entrada e verifica seu contéudo, após isso, utiliza o parser gerado pela ferramenta 'Happy' e raliaza a análise sintática e gera a árvore correspondente.
+    \item No modo \texttt{peg}, o programa lê o arquivo de entrada e verifica seu contéudo, após isso, executa o código representado pela árvore de sintaxe produzida pelo parser e usando o interpretador, lê o conteúdo da árvore.
+    \item No modo \texttt{help}, o programa exibe informações explicativas sobre o funcionamento do compilador e as opções do menu.
+\end{itemize}
+
+Caso o usuário escolha uma opção inválida, o programa solicita mostra quais são as opções válidas disponíveis.
+
+\section{Lexer}
+O módulo Lexer.hs é gerado pela ferramenta 'Alex' a partir do conteúdo de \texttt{Lexer.x}, esse conteúdo conta com regras e definições dos tokens, como pro exemplo:
+\begin{itemize}
+    \item Identifica palavras-chave como print, if, else, return. 
+    \item Reconhece símbolos de operação (+, -, *, /, etc.) e pontuação (;, {, }, etc.). 
+    \item Gera uma lista de tokens que servem como entrada para a próxima etapa. 
+\end{itemize}
+
+A análise léxica é a primeira etapa no processo de compilação, onde o código-fonte é transformado em uma sequência de tokens. A função principal do módulo, lexer, recebe os tokens lidos pela ferramenta 'Alex' para serem apresentados, separadamente, ao susuário.
+
+\subsection{Definição do Tipo de Token}
+
+O arquivo \texttt{Lexer.x} conta com a definição do tipo de token, que representa as diferentes categorias de tokens reconhecidas pelo lexer. Cada token pode ser um identificador, como por exemplo: (\texttt{ID String}), um número inteiro (\texttt{INT Int}), ou uma palavra-chave, como \texttt{PRINT}, \texttt{IF}, \texttt{ELSE}, \texttt{THEN}, \texttt{RETURN}. Além disso, o lexer também reconhece operadores (\texttt{OP String}) e pontuação (\texttt{PUNC String}), como parênteses e operadores aritméticos.
+
+\begin{verbatim}
+data Token
+  = ID String
+  | TYPEID String
+  | INT Int
+  | FLOAT Float
+  | CHAR Char
+  | BOOL Bool
+  | NULL
+  | PRINT
+  | IF
+  | ELSE
+  | THEN
+  | RETURN
+  | FUN
+  | DATA
+  | MAIN
+  | ITERATE
+  | READ
+  | NEW
+  | OP String
+  | PUNC String
+  | ASSIGN
+  | WHILE
+  | BREAK
+  deriving (Show, Eq)
+\end{verbatim}
+
+Cada construtor de \texttt{Token} representa uma categoria específica, e a função \texttt{Show} é derivada para permitir a exibição dos tokens no terminal durante a execução do programa.
+
+\subsection{Reconhecimento dos Tokens}
+
+Além de definir os Tokens, existe também as expressões regulares associadas a tipos de tokens da linguagem Lang. para reconhecimento desses tokens, isso significa, ler o arquivo de entrada e saber definir quais são os tokens e atribui-los aos tipos previamente definidos, ou seja, o analisador léxico percorre caractere por caractere e, com base nas características de cada caractere, decide qual token gerar. Alguns exemplos:
+
+\begin{verbatim}
+tokens :-
+[ \t\n\r]+               ;  -- Ignorar espaços e quebras de linha
+$alpha($alnum)* { \s -> mkIdent s }  -- Identificador ou palavra-chave
+$digit+        { \s -> INT (read s) }  -- Número inteiro
+$digit+"."$digit+ { \s -> FLOAT (read s) }  -- Número float
+"'[^\']'"      { \s -> case s of
+                            ('\'':c:'\'':[]) -> CHAR c
+                            _ -> error ("Invalid char literal: " ++ s) }
+"&&"           { \_ -> OP "&&" }
+"=="           { \_ -> OP "==" }
+"!="           { \_ -> OP "!=" }
+"<="           { \_ -> OP "<=" }
+">="           { \_ -> OP ">=" }
+"<"            { \_ -> OP "<" }
+">"            { \_ -> OP ">" }
+.
+.
+.
+\end{verbatim}
+
+O analisador léxico começa verificando se o caractere atual é um espaço, um identificador, um número ou um símbolo de pontuação/operador. Se o caractere for um espaço, ele é ignorado e o analisador continua com os caracteres restantes. Se for um caractere alfabético \texttt{alpha} (Representa letras e underscore (a-zA-Z)), o analisador identifica palavras-chave ou identificadores como ID. Se o caractere for numérico \texttt{digit} (Representa dígitos numéricos (0-9)), o analisador processa o número e executa a conversão necessária, sendo inteiro ou ponto flutuante. Caso o caractere seja um dos símbolos de pontuação ou operadores definidos, o token correspondente é gerado. Se o caractere não se encaixar em nenhuma dessas categorias, um erro é gerado indicando um caractere inesperado.
+
+\newpage
+\section{ParserRecursive}
+O módulo \texttt{ParserRecursive.hs} é responsável pela analise sintática descendente recursiva do compilador "lang". Ele recebe uma sequência de tokens, gerada pelo analisador léxico (lexer), e constrói a Árvore de Sintaxe Abstrata (AST) que representa a estrutura hierárquica, a qual facilita a compreensão e o processamento do código-fonte. É importante ressaltar que o grupo teve muita dificuldade nesta etapa de parsing, além das dificuldades encontradas na implementação, houve problemas com a identação no momento da impressão da árvore no terminal.
+A seguir, será apresentada uma descrição detalhada sobre as principais funções presentes neste módulo. Ele utiliza técnicas de correspondência de padrões e funções auxiliares para processar estruturas como funções, blocos e expressões. A \texttt{AST} gerada é formatada e impressa na tela.
+
+Definição do tipo de Árvore de Sintaxe Abstrata:
+
+\begin{verbatim}
+data AST
+    = Node String [AST] -- Um nó com um rótulo e subárvores
+    | Leaf String       -- Uma folha com um valor
+    deriving (Show)
+\end{verbatim} 
+
+\subsection{Definição da Árvore de Sintaxe (AST)}
+
+A estrutura principal do módulo é a Árvore de Sintaxe (AST), que é definida como um tipo algébrico com duas variantes:
+
+\begin{itemize}
+    \item \textbf{Node}: Representa um nó da árvore que possui um rótulo (uma string) e uma lista de subárvores (ou filhos). 
+    \item \textbf{Leaf}: Representa uma folha da árvore que contém um valor simples (também uma string).
+\end{itemize}
+
+\subsection{Função Principal: \texttt{parseAndPrintAST}}
+\begin{verbatim}
+parseAndPrintAST :: String -> IO ()
+parseAndPrintAST content = do
+  let ast = parseProgram content
+  putStrLn "\nÁrvore de Sintaxe Gerada:"
+  putStrLn (formatAST ast)
+\end{verbatim}
+
+Essa função é responsável por:
+\begin{enumerate}
+    \item Tokenizar o conteúdo da entrada usando \texttt{lexer}.
+    \item Construir a \texttt{AST} utilizando \texttt{buildAST}.
+    \item Exibir a árvore formatada com \texttt{formatAST}.
+\end{enumerate}
+
+\newpage
+\subsection{Função \texttt{formatAST}}
+Essa função exibe a \texttt{AST} em formato estilizado como uma árvore hierárquica. 
+\begin{verbatim}
+formatAST :: AST -> String
+formatAST ast = unlines (formatHelper ast "")
+\end{verbatim}
+
+\textbf{Descrição do Auxiliar Que Existe Dentro da Função:}
+\begin{itemize}
+    \item \texttt{formatHelper}: Processa recursivamente os nós da \texttt{AST}, adicionando prefixos que representam a hierarquia.
+\end{itemize}
+
+\subsection{Funções de Parsing}
+As funções a seguir processam \texttt{Token}s e constroem a \texttt{AST}.
+
+\subsubsection{Função \texttt{parseBlock}}
+\begin{verbatim}
+parseBlock :: [Token] -> ([AST], [Token])
+parseBlock (PUNC "{" : rest) =
+  let (blockTokens, remaining) = span (/= PUNC "}") rest
+  in (buildAST blockTokens, drop 1 remaining)
+parseBlock tokens = ([], tokens)
+\end{verbatim}
+\texttt{parseBlock} processa blocos delimitados por chaves (\texttt{\{ \}}), retornando a \texttt{AST} do bloco de código com seus respectivos tokens, além dos \texttt{Token}s restantes.
+
+\subsubsection{Função \texttt{parseExpression}}
+\begin{verbatim}
+parseExpression :: [Token] -> ([AST], [Token])
+parseExpression (ID name : rest) = ([Leaf ("ID: " ++ name)], rest)
+parseExpression (INT val : rest) = ([Leaf ("INT: " ++ show val)], rest)
+parseExpression (OP op : rest) = ([Leaf ("OP: " ++ op)], rest)
+parseExpression (PUNC p : rest) = ([Leaf ("PUNC: " ++ p)], rest)
+parseExpression tokens = ([], tokens)
+\end{verbatim}
+Essa função identifica diferentes tipos de expressões (\texttt{ID}, \texttt{INT}, \texttt{OP}, etc.) e constrói folhas da \texttt{AST} para cada uma delas.
+
+\subsubsection{Função \texttt{buildAST}}
+\begin{verbatim}
+buildAST :: [Token] -> [AST]
+buildAST [] = []
+buildAST (ID name : PUNC "(" : rest) =
+  let (params, remaining1) = span (/= PUNC ")") rest
+      (body, remaining2) = parseBlock (drop 1 remaining1)
+  in Node ("Function: " ++ name) (map (Leaf . show) params ++ body) : 
+  buildAST remaining2
+  ...
+\end{verbatim}
+
+Essa função é maior dentro do arquivo "ParserRecursive.hs", para esse relatório foi selecionado apenas uma parte dela para explicação, por isso o uso das reticências, essa função é responsável por construir a \texttt{AST} completa com base em uma sequência de \texttt{Token}s. Os principais casos incluem:
+\begin{itemize}
+    \item \texttt{Funções}: Identificadas por um \texttt{ID} seguido de parênteses, com parâmetros e corpo processados como nós e subárvores.
+    \item \texttt{Print}: Cria um nó "Print" com subárvores representando as expressões.
+    \item \texttt{If}: Constrói uma árvore com nós "If", "Then" e "Else", processando os respectivos blocos.
+    \item \texttt{Return}: Constrói um nó "Return" com a expressão associada.
+    \item \texttt{Outros casos}: Blocos são representados por nós "Block".
+\end{itemize}
+
+\section{Parser LALR}
+
+O arquivo \texttt{Parser.y} define o \textbf{analisador sintático LALR} da linguagem lang usando a ferramenta 'Happy'. Ele recebe os tokens do analisador léxico (\texttt{Lexer.x}) e constrói a \textbf{Árvore de Sintaxe Abstrata (AST)} do programa.
+
+\subsection{Estrutura do Arquivo}
+
+\subsubsection{Definição de Tokens}
+Os tokens são definidos com \textbf{nomes simbólicos} e associados aos valores do \texttt{Lexer.x}.
+
+\textbf{Exemplos de Tokens}:
+\begin{itemize}
+    \item \textbf{Palavras-chave}: \texttt{PRINT}, \texttt{IF}, \texttt{ELSE}, \texttt{RETURN}, \texttt{FUN}, \texttt{WHILE}.
+    \item \textbf{Tipos de dados}: \texttt{INT}, \texttt{FLOAT}, \texttt{CHAR}, \texttt{BOOL}, \texttt{NULL}.
+    \item \textbf{Operadores}: \texttt{OP}, \texttt{ASSIGN}, \texttt{OP\_GE (>=)}, \texttt{OP\_LE (<=)}.
+    \item \textbf{Símbolos de pontuação}: \texttt{P\_SEMICOLON (;), P\_COMMA (,), P\_LPAREN (()), P\_RBRACE (\})}.
+\end{itemize}
+
+\subsubsection{Definição da Gramática (Regras Sintáticas)}
+A gramática é composta por \textbf{regras que estruturam o código} da linguagem lang.
+
+\textbf{Principais Regras}:
+\begin{itemize}
+    \item \textbf{Program} → Define a estrutura do programa (\texttt{main} e funções).
+    \item \textbf{Declaration} → Declaração de funções (\texttt{fun nome(params) \{\}}).
+    \item \textbf{Expression} → Expressões matemáticas e booleanas.
+    \item \textbf{Statement} → Estruturas de controle (\texttt{if-else}, \texttt{while}, \texttt{return}, \texttt{print}).
+    \item \textbf{Block} → Blocos \texttt{\{ \}} que agrupam comandos.
+    \item \textbf{Assignment} → Atribuição de valores (\texttt{x = 10;}).
+    \item \textbf{ParamListWithTypes} → Lista de parâmetros de funções com tipos.
+\end{itemize}
+
+\subsubsection{Construção da AST (Árvore de Sintaxe Abstrata)}
+A AST é representada por um tipo Haskell, onde cada \textbf{nó} representa uma \textbf{estrutura do programa}.
+
+Exemplos de nós na AST:
+\begin{itemize}
+    \item \texttt{FunStmt} → Representa uma \textbf{declaração de função}.
+    \item \texttt{IfStmt} → Representa um \textbf{comando if-else}.
+    \item \texttt{WhileStmt} → Representa um \textbf{loop while}.
+    \item \texttt{OpExpr} → Representa uma \textbf{operação matemática} (\texttt{a + b}).
+\end{itemize}
+
+\subsubsection{Função de Impressão da AST}
+\begin{itemize}
+    \item A função \texttt{prettyPrintAST} gera uma \textbf{representação hierárquica} da AST.
+    \item Usa \textbf{indentação} para facilitar a leitura.
+\end{itemize}
+
+\textbf{Exemplo de Impressão da AST}:
+\begin{verbatim}
+L MainProgram
+    L FunStmt: fat
+    |   L Params: [ID: num :: Int]
+    |   L ReturnTypes: [Int]
+    |   L Body:
+    |       L IfStmt
+    |       |   L Condition: (num < 1)
+    |       |   L Then: return 1
+    |       |   L Else: return num * fat(num-1)
+\end{verbatim}
+
+
+\section{Interpreter}
+
+O arquivo \texttt{Interpreter.hs} implementa um \textbf{interpretador} para a linguagem lang, processando a \textbf{AST} gerada pelo parser e executando os comandos. O interpretador processa expressões, variáveis e fluxos de controle dentro de um ambiente de execução estruturado, avalia todo o conteúdo de entrada e verifica se conseguiu percorrer por toda a gramática sem encotrar erros, exibindo uma mensagem de sucesso ao fim da verificação.
+
+\subsection{Principais Componentes}
+\begin{itemize}
+    \item \textbf{Env} – Representa o ambiente de execução (variáveis e valores).
+    \item \textbf{interpOp} - Abstrai operações matemáticas para inteiros e floats.Aplica a operação correta com base nos tipos dos valores fornecidos. Se os operandos não forem compatíveis, gera um erro de tipo.
+    \item \textbf{interpExp} – Avalia expressões, incluindo operações matemáticas.
+    \item \textbf{interpStmt} – Processa comandos como atribuições, \texttt{print}, \texttt{if-else} e \texttt{return}.
+    \item \textbf{interpBlock} – Executa blocos de código sequencialmente.
+    \item \textbf{interpProgram} – Inicia a execução do programa.
+\end{itemize}
+
+\subsection{Funcionamento}
+\begin{itemize}
+    \item Avalia expressões e operadores matemáticos.
+    \item Gerencia variáveis e blocos de código.
+    \item Executa comandos de entrada/saída e controle de fluxo.
+\end{itemize}
+
+\section{Syntax}
+
+O arquivo \texttt{Syntax.hs} define a \textbf{estrutura de dados} usada na representação da linguagem lang, convertendo a \textbf{AST} gerada pelo parser em um formato estruturado, permitindo a conversão da AST em uma representação estruturada que pode ser processada pelo interpretador.
+
+\subsection{Principais Componentes}
+\begin{itemize}
+    \item \textbf{Value} – Representa valores primitivos (\texttt{Int}, \texttt{Float}, \texttt{Bool}, \texttt{Char}).
+    \item \textbf{Exp} – Estrutura de expressões matemáticas e lógicas.
+    \item \textbf{Ty} – Define os tipos suportados pela linguagem.
+    \item \textbf{Program} – Representa um programa contendo declarações.
+    \item \textbf{Decl} – Define funções com nome, parâmetros, tipo de retorno e corpo.
+    \item \textbf{Block} – Conjunto de comandos de um escopo.
+    \item \textbf{Stmt} – Estruturas de controle como \texttt{if}, \texttt{while}, atribuições e chamadas de função.
+\end{itemize}
+
+\subsection{Conversão da AST}
+\begin{itemize}
+    \item \textbf{astToProgram} – Converte a AST para um \texttt{Program}.
+    \item \textbf{astToDecl} – Processa declarações de funções.
+    \item \textbf{astToBlock} – Converte blocos de código.
+    \item \textbf{astToStmt} – Transforma comandos em estrutura interpretável.
+    \item \textbf{astToExp} – Converte expressões da AST para sua forma manipulável.
+    \item \textbf{strToTy} – Mapeia strings para tipos definidos na linguagem.
+\end{itemize}
+
+
+\section{PEG}
+Nesta etapa o grupo encontrou muitas dificuldades. O arquivo \texttt{PEG.hs} tenta implementar a análise sintática e a interpretação de código da linguagem lang utilizando \textbf{Parsing Expression Grammar (PEG)}. Ele tenta realizar a análise sintática da entrada fornecida, gera a árvore de sintaxe abstrata (AST) e executa o código interpretado.
+
+\subsection{Módulos Importados}
+Para realizar suas funções, \texttt{PEG.hs} importa os seguintes módulos:
+\begin{itemize}
+    \item \textbf{Lexer} – Utiliza \texttt{alexScanTokens} para converter a entrada em tokens lexicais.
+    \item \textbf{Parser} – Emprega \texttt{parser} para gerar a AST a partir dos tokens.
+    \item \textbf{Syntax} – Contém \texttt{astToProgram}, que converte a AST na estrutura do programa.
+    \item \textbf{Interpreter} – Utiliza \texttt{interpProgram} para interpretar e executar o programa representado pela AST.
+\end{itemize}
+
+\subsection{Função Principal: \texttt{parsePEGAndInterpret}}
+A função principal, \texttt{parsePEGAndInterpret}, executa o pipeline de análise e execução do código Lang. Seus passos são:
+\begin{enumerate}
+    \item \textbf{Tokenização}: Converte a entrada bruta em tokens usando \texttt{alexScanTokens}.
+    \item \textbf{Análise Sintática}: Aplica o \texttt{parser} para construir a AST.
+    \item \textbf{Conversão}: Usa \texttt{astToProgram} para transformar a AST na estrutura de programa.
+    \item \textbf{Execução}: Interpreta e executa o programa via \texttt{interpProgram}.
+\end{enumerate}
+
+O grupo teve bastante dificuldade nesta etapa do PEG, não foi possível realizar a conversão do código-fonte para sua forma estruturada, imporssibilitando sua execução por meio do interpretador, o que o grupo conseguiu fazer foi ler o arquivo de entrada e rodar o interpretador, passando por todo seu conteúdo e encerrando sem mensagens de erros, a impressão da árvore foi feita utilizando a função presente no parser do LALR.
+
+
+\section{Teste de Entrada e Saída}
+\subsection{Entrada}
+O programa abaixo é um exemplo de uso do compilador, ele está alocado dentro da pasta "test" e serve para testar todo o projeto:
+
+
+\begin{verbatim}
+main() {
+  print fat(10)[0];
+}
+
+fat(num :: Int) : Int {
+  if (num < 1)
+    return 1;
+  else
+    return num * fat(num-1)[0];
+}
+
+divmod(num :: Int, div :: Int) : Int, Int {
+  q = num / div;
+  r = num % div;
+  return q, r;
+}
+\end{verbatim}
+
+\subsection{Saída}
+\subsubsection{Saída do Lexer}
+Abaixo tem-se um exemplo de saída que o compilador fornece, quando se utiliza a opção "Lexer":
+\begin{verbatim}
+Tokens encontrados:
+ID "main"
+PUNC "("
+PUNC ")"
+PUNC "{"
+PRINT
+ID "fat"
+PUNC "("
+INT 10
+PUNC ")"
+PUNC "["
+INT 0
+PUNC "]"
+PUNC ";"
+PUNC "}"
+ID "fat"
+PUNC "("
+ID "num"
+PUNC ":"
+PUNC ":"
+ID "Int"
+PUNC ")"
+PUNC ":"
+ID "Int"
+PUNC "{"
+IF
+PUNC "("
+ID "num"
+OP "<"
+INT 1
+PUNC ")"
+RETURN
+INT 1
+PUNC ";"
+ELSE
+RETURN
+ID "num"
+OP "*"
+ID "fat"
+PUNC "("
+ID "num"
+OP "-"
+INT 1
+PUNC ")"
+PUNC "["
+INT 0
+PUNC "]"
+PUNC ";"
+PUNC "}"
+ID "divmod"
+PUNC "("
+ID "num"
+PUNC ":"
+PUNC ":"
+ID "Int"
+PUNC ","
+ID "div"
+PUNC ":"
+PUNC ":"
+ID "Int"
+PUNC ")"
+PUNC ":"
+ID "Int"
+PUNC ","
+ID "Int"
+PUNC "{"
+ID "q"
+OP "="
+ID "num"
+OP "/"
+ID "div"
+PUNC ";"
+ID "r"
+OP "="
+ID "num"
+OP "%"
+ID "div"
+PUNC ";"
+RETURN
+ID "q"
+PUNC ","
+ID "r"
+PUNC ";"
+PUNC "}"
+\end{verbatim}
+
+\subsubsection{Saída do ParserRescursive}
+Devido aos problemas e dificuldades com a implementação e depois com a identação da árvore, o compilador "entrega" como resultado uma árvore com os tokens do programa lido em sequência, buscando obedecer a hierarquia entre eles.
+
+A árvore para o programa de entrada \texttt{exemplo.lang} foi construída e teve como saída:
+
+\begin{verbatim}
+|- Program
+|  |- Function: main
+|  |  |- Print
+|  |  |  L- ID: fat
+|  |  L- PUNC "("
+|  |  L- INT 10
+|  |  L- PUNC ")"
+|  |  L- PUNC "["
+|  |  L- INT 0
+|  |  L- PUNC "]"
+|  |  L- PUNC ";"
+|  |- Function: fat
+|  |  L- ID "num"
+|  |  L- PUNC ":"
+|  |  L- PUNC ":"
+|  |  L- ID "Int"
+|  L- PUNC ":"
+|  L- ID "Int"
+|  |- Block
+|  |- If
+|  |  L- PUNC: (
+|  |  |- Then
+|  |  |- Else
+|  L- ID "num"
+|  L- OP "<"
+|  L- INT 1
+|  L- PUNC ")"
+|  |- Return
+|  |  L- INT: 1
+|  L- PUNC ";"
+|  L- ELSE
+|  |- Return
+|  |  L- ID: num
+|  L- OP "*"
+|  |- Function: fat
+|  |  L- ID "num"
+|  |  L- OP "-"
+|  |  L- INT 1
+|  L- PUNC "["
+|  L- INT 0
+|  L- PUNC "]"
+|  L- PUNC ";"
+|  L- PUNC "}"
+|  |- Function: divmod
+|  |  L- ID "num"
+|  |  L- PUNC ":"
+|  |  L- PUNC ":"
+|  |  L- ID "Int"
+|  |  L- PUNC ","
+|  |  L- ID "div"
+|  |  L- PUNC ":"
+|  |  L- PUNC ":"
+|  |  L- ID "Int"
+|  L- PUNC ":"
+|  L- ID "Int"
+|  L- PUNC ","
+|  L- ID "Int"
+|  |- Block
+|  L- ID "q"
+|  L- OP "="
+|  L- ID "num"
+|  L- OP "/"
+|  L- ID "div"
+|  L- PUNC ";"
+|  L- ID "r"
+|  L- OP "="
+|  L- ID "num"
+|  L- OP "%"
+|  L- ID "div"
+|  L- PUNC ";"
+|  |- Return
+|  |  L- ID: q
+|  L- PUNC ","
+|  L- ID "r"
+|  L- PUNC ";"
+|  L- PUNC "}"
+\end{verbatim}
+
+\subsubsection{Saída do Parser LALR}
+Ainda utilizando o arquivo de exemplo \texttt{exemplo.lang}:
+
+\begin{verbatim}
+    L- ProgramStmtList
+    L- FunStmt
+        L- Name: [ID: main]
+        L- Params: []
+        L- ReturnTypes: []
+        L- BlockStmt
+            L- PrintStmt
+                L- IndexExpr
+                    L- Array:
+                        L- CallExpr
+                            L- Name: [ID: fat]
+                            L- Args:
+                                L- IntExpr [INT: 10]
+                    L- Index:
+                        L- IntExpr [INT: 0]
+    L- FunStmt
+        L- Name: [ID: fat]
+        L- Params: [ID: num :: Int] 
+        L- ReturnTypes: ["Int"]
+        L- BlockStmt
+            L- IfStmt
+                L- Condition:
+                    L- OpExpr [OP: <]
+                        L- Left:
+                            L- VarExpr [ID: num]
+                        L- Right:
+                            L- IntExpr [INT: 1]
+                L- Then:
+                    L- ReturnStmt
+                        L- IntExpr [INT: 1]
+                L- Else:
+                    L- ReturnStmt
+                        L- OpExpr [OP: *]
+                            L- Left:
+                                L- VarExpr [ID: num]
+                            L- Right:
+                                L- IndexExpr
+                                    L- Array:
+                                        L- CallExpr
+                                            L- Name: [ID: fat]
+                                            L- Args:
+                                                L- OpExpr [OP: -]
+                                                    L- Left:
+                                                        L- VarExpr [ID: num]
+                                                    L- Right:
+                                                        L- IntExpr [INT: 1]
+                                    L- Index:
+                                        L- IntExpr [INT: 0]
+    L- FunStmt
+        L- Name: [ID: divmod]
+        L- Params: [ID: num :: Int] [ID: div :: Int] 
+        L- ReturnTypes: ["Int","Int"]
+        L- BlockStmt
+            L- AssignmentStmt
+                L- LValueAssignment
+                    L- LValue:
+                        L- VarExpr [ID: q]
+                    L- Expr:
+                        L- OpExpr [OP: /]
+                            L- Left:
+                                L- VarExpr [ID: num]
+                            L- Right:
+                                L- VarExpr [ID: div]
+            L- AssignmentStmt
+                L- LValueAssignment
+                    L- LValue:
+                        L- VarExpr [ID: r]
+                    L- Expr:
+                        L- OpExpr [OP: %]
+                            L- Left:
+                                L- VarExpr [ID: num]
+                            L- Right:
+                                L- VarExpr [ID: div]
+            L- ReturnStmt
+                L- VarExpr [ID: q]
+                L- VarExpr [ID: r]
+\end{verbatim}
+
+
+
+\newpage
+\section{Desafios Encontrados}
+\begin{enumerate}
+    \item O grupo continuou com dificuldades na impressão da árvore do analisador sintático descendente recursivo.
+    \item Densolvimento do PEG: O grupo não conseguiu executar o PEG da forma que se esperava, teve que adaptar com funções do LALR, o grupo tentou utilizar as bibliotecas do PEG disponibilizadas pelo professor no repositório da disciplina mas não obteve sucesso na adaptação para lang. A saída produzida pelo PEG é a mesma árvore de sintaxe produzida pelo LALR, por esse motivo não foi inserido o resultado da saída gerada pelo PEG, pois são iguais. Após a criação da árvore pelo PEG, o interpretador recebe a árvore como entrada e realiza o processo de interpretação. A grande dificuldade nesta etapa foi de fato desenvolver o PEG, o grupo não conseguiu entregar da maneira correta.
+    \item Geração e Visualização da árvore: Sobre o analisador sintático descendente recursivo, o grupo não conseguiu fazer a árvore ficar corretamente identada e bem apresentável na tela, houveram diversas tentativas sem sucesso, porém, para o LALR foi possível construir a aŕvore sem problemas de identação, pois com o uso da ferramenta 'Happy' a geração do \texttt{Parser.hs} facilitou a construção da árvore.
+\end{enumerate}
+
+ \section{Recomendações de Melhoria}
+ \begin{enumerate}
+    \item Tratamento de Erros: Adicionar mensagens de erro mais descritivas no parser para auxiliar na depuração. 
+    \item Desenvolver o PEG: Entender melhor como se dá o desenvolvimento do PEG a partir das bilbliotecas já prontas e entregá-lo com suas funcionalidades esperadas na próxima etapa do trabalho, já que nessa versão, o PEG não ficou completo e funcional da forma correta.
+ \end{enumerate}
+
+\newpage
+\section{Conclusão}
+
+O projeto do compilador "lang" foi desenvolvido com o objetivo de implementar as fases iniciais de um compilador simples, consistindo principalmente da análise léxica e da análise sintática. O módulo de análise léxica (\texttt{Lexer.hs}), responsável por identificar e classificar os tokens de um programa, juntamente com o módulo de análise sintática (\texttt{Parser.hs}), que constrói a Árvore de Sintaxe Abstracta (AST) a partir dos tokens gerados, formam a base para a transformação do código-fonte em uma representação estruturada que pode ser utilizada em etapas posteriores, como a geração de código intermediário ou otimizações.
+
+\subsection{Análise Léxica}
+
+A função de análise léxica (\texttt{lexer}) tem um papel crucial em reconhecer a linguagem do código-fonte. Ela é responsável por processar a entrada caractere por caractere, agrupando-os em tokens, que são as unidades de significado para o compilador. O módulo trata de diferentes tipos de tokens, como identificadores, números, operadores e pontuações, assegurando que o código seja segmentado de forma adequada para a análise sintática subsequente. Com a utilização da ferramenta 'Alex' a análise léxica fica mais direta do que fazer "a mão" e possibilita um melhor entendimento de como é gerado o arquivo .hs a partir do arquivo .x onde está situado todas as regras e definições.
+
+A principal vantagem dessa abordagem é a clareza e modularidade do código, o que facilita a manutenção e a expansão. A implementação do lexer permite uma rápida identificação de erros de sintaxe simples, como caracteres inesperados. Além disso, a inclusão de palavras-chave como \texttt{if}, \texttt{else}, \texttt{then} e \texttt{print} no lexer permite que o compilador compreenda e trate essas construções de forma apropriada.
+
+\subsection{Análise Sintática}
+
+Apesar dessa etapa ter proporcionado diversas dificuldades e impossibilidades, é importante entender seu funcionamento teórico: O código desenvolvido do analisador sintático descendente recursivo implementa um parser simples e funcional para a construção de uma Árvore de Sintaxe Abstrata (AST), a partir de uma sequência de tokens gerada pelo analisador léxico. Esse parser foi projetado para identificar estruturas sintáticas específicas, como blocos de código delimitados por chaves, expressões matemáticas e estruturas condicionais, representando-as de forma hierárquica por meio de nós e folhas na AST.
+
+Além disso, para o analisador sintático LALR, o grupo conseguiu ver melhor como se dá a construção do arquivo de parser gerado pela ferramenta 'Happy', que também facilita a construção do projeto ao invés de digitar todo o arquivo manualmente. Para o PEG, onde o grupo teve mais dificuldades, ficou mais difícil de visualizar a forma correta desse analisador, espera-se conseguir uma evolução para a próxima entrega do trabalho ter uma versão do PEG que funcione como o esperado, diferentemente da versão do trabalho atual.
+
+Os analisadores sintáticos que o grupo tentou desenvolver, um analisador descendente recursivo, LALR e PEG, oferecem vantagens como a simplicidade de implementação, maior clareza no código e facilidade de depuração. Eles são especialmente úteis para linguagens com gramáticas simples, e como dito anteriormente, podem servir como base para futuras extensões, como análise semântica ou geração de código.
+
+\end{document}
